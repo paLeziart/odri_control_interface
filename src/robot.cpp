@@ -181,7 +181,7 @@ void Robot::WaitUntilReady()
 
     std::chrono::time_point<std::chrono::system_clock> last =
         std::chrono::system_clock::now();
-    while (!IsReady() && !HasError())
+    while (!IsReady())
     {
         if (((std::chrono::duration<double>)(std::chrono::system_clock::now() -
                                              last))
