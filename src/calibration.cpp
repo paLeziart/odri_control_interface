@@ -109,6 +109,7 @@ bool JointCalibrator::Run()
     double des_pos = 0.;
     bool finished = true;
     // std::cout << "JointCalibra::DesPos";
+    // std::cout << "#----#" << std::endl;
     for (int i = 0; i < n_; i++)
     {
         // As long as the index was not found, search for it.
@@ -148,7 +149,8 @@ bool JointCalibrator::Run()
                 command_[i] = Kp_ * (des_pos / gear_ratios_[i] +
                                      initial_positions_[i] - positions[i]) -
                               Kd_ * velocities[i];
-                // std::cout << des_pos << " ";
+                // std::cout << i << " " << found_index_[i] << " " << des_pos / gear_ratios_[i] << " " << positions[i] << " " << initial_positions_[i] << std::endl;
+                // std::cout << des_pos << " " << has_index_been_detected[i] << " ";
             }
             finished = false;
             // After the index was found, move to the initial zero position.
@@ -165,8 +167,15 @@ bool JointCalibrator::Run()
                 des_pos = 0;
             }
             command_[i] = Kp_ * (des_pos - positions[i]) - Kd_ * velocities[i];
+            // std::cout << i << " " << found_index_[i] << " " << des_pos << " " << positions[i] << " " << initial_positions_[i] << std::endl;
         }
     }
+    /*for (int i = 0; i < n_; i++)
+    {
+        std::cout << found_index_[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Finished: " << finished << std::endl;*/
 
     joints_->SetTorques(command_);
     t_ += dt_;

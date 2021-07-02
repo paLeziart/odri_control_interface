@@ -49,7 +49,7 @@ while not robot.is_timeout:
 
     des_pos[:] = imu_attitude[2] - init_imu_attitude[2]
     torques = 5.0 * (des_pos - positions) - 0.1 * velocities
-    robot.joints.set_torques(torques)
+    robot.joints.set_torques(0.0 * torques)
 
     robot.send_command_and_wait_end_of_cycle()
     c += 1

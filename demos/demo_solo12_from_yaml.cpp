@@ -26,8 +26,9 @@ int main()
 
     // Initialize simple pd controller.
     Vector12d torques;
-    double kp = 3.;
+    double kp = 2.;
     double kd = 0.05;
+    double des_pos[12] = {0.2, 0.7, -1.4, -0.2, 0.7, -1.4, 0.2, -0.7, +1.4, -0.2, -0.7, +1.4};
     int c = 0;
     std::chrono::time_point<std::chrono::system_clock> last =
         std::chrono::system_clock::now();
@@ -57,9 +58,12 @@ int main()
                     auto pos = robot->joints->GetPositions();
                     auto vel = robot->joints->GetVelocities();
                     // Reverse the positions;
+                    std::cout << "------" << std::endl;
                     for (int i = 0; i < 12; i++)
                     {
-                        torques[i] = -kp * pos[i] - kd * vel[i];
+                        // torques[i] = -kp * pos[i] - kd * vel[i];
+                        torques[i] = 0.0; // kp * (des_pos[i] - pos[i]) - kd * vel[i];
+                        std::cout << i << " " << des_pos[i] << " " << pos[i] << " " << vel[i] << std::endl;
                     }
                     robot->joints->SetTorques(torques);
                 }

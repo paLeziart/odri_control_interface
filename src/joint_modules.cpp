@@ -333,6 +333,14 @@ bool JointModules::HasError()
                     PrintVector(upper_joint_limits_);
                     msg_out_ << std::endl;
                 }
+                msg_out_ << "ERROR: Above joint limits at joint #" << (i)
+                             << std::endl;
+                msg_out_ << "  Joints: ";
+                PrintVector(positions_);
+                msg_out_ << std::endl;
+                msg_out_ << "  Limits: ";
+                PrintVector(upper_joint_limits_);
+                msg_out_ << std::endl;
                 break;
             }
         }
@@ -353,6 +361,14 @@ bool JointModules::HasError()
                     PrintVector(lower_joint_limits_);
                     msg_out_ << std::endl;
                 }
+                msg_out_ << "ERROR: Below joint limits at joint #" << (i)
+                             << std::endl;
+                msg_out_ << "  Joints: ";
+                PrintVector(positions_);
+                msg_out_ << std::endl;
+                msg_out_ << "  Limits: ";
+                PrintVector(lower_joint_limits_);
+                msg_out_ << std::endl;
                 break;
             }
         }
@@ -378,18 +394,25 @@ bool JointModules::HasError()
                     msg_out_ << "  Limit: " << max_joint_velocities_
                              << std::endl;
                 }
+                msg_out_ << "ERROR: Above joint velocity limits at joint #"
+                             << (i) << std::endl;
+                msg_out_ << "  Joints: ";
+                PrintVector(velocities_);
+                msg_out_ << std::endl;
+                msg_out_ << "  Limit: " << max_joint_velocities_
+                            << std::endl;
                 break;
             }
         }
     }
 
     // Check the status of the cards.
-    bool print_error = false;
+    bool print_error = true;
     for (int i = 0; i < nd_; i++)
     {
         if (robot_if_->motor_drivers[i].error_code != 0)
         {
-            if (print_error || motor_drivers_error_counter++ % 2000 == 0)
+            if (print_error) // || motor_drivers_error_counter++ % 2000 == 0)
             {
                 print_error = true;
                 msg_out_ << "ERROR at motor drivers #" << (i) << ": ";

@@ -134,7 +134,7 @@ bool Robot::RunCalibration(const std::shared_ptr<JointCalibrator>& calibrator)
         ParseSensorData();
 
         is_done = calibrator->Run();
-
+        std::cout << "is_done " << is_done << std::endl;
         if (is_done)
         {
             return true;
@@ -142,6 +142,7 @@ bool Robot::RunCalibration(const std::shared_ptr<JointCalibrator>& calibrator)
 
         if (!SendCommandAndWaitEndOfCycle())
         {
+            std::cout << "fail" << std::endl;
             return false;
         }
     }
@@ -214,9 +215,11 @@ bool Robot::IsTimeout()
 bool Robot::HasError()
 {
     saw_error_ |= joints->HasError();
+    if (joints->HasError()) {msg_out_ << "ERROR: Joints error." << std::endl;}
     if (imu)
     {
         saw_error_ |= imu->HasError();
+        if (imu->HasError()) {msg_out_ << "ERROR: IMU error." << std::endl;}
     }
 
     if (robot_if->IsTimeout())

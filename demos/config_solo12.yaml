@@ -1,13 +1,13 @@
 robot:
-    interface: ens3
+    interface: enp2s0
     joint_modules:
         motor_numbers: [0, 3, 2, 1, 5, 4, 6, 9, 8, 7, 11, 10]
         motor_constants: 0.025
         gear_ratios: 9.
         max_currents: 1.
         reverse_polarities: [
-            true, false, true, true, false, false,
-            true, false, true, true, false, false
+            true, true, true, false, false, false,
+            true, true, true, false, false, false
         ]
         lower_joint_limits: [
             -1.2, -1.7, -3.4, -1.2, -1.7, -3.4,
@@ -29,11 +29,11 @@ joint_calibrator:
       AUTO, AUTO, AUTO, AUTO, AUTO, AUTO
     ]
     position_offsets: [
-        0.184, -0.370, -0.005, -.150,
-        0.000,  0.310,  0.165, 0.150,
-        0.365, 0.202, -0.175, -0.175
+        -0.19501629,  0.20769028, -0.03753992, -0.31352305,  0.2759672,
+        -0.28213935, -0.1941794 , -0.23665195,  0.21717513,  0.24587372,
+        -0.3867009, -0.1188744
     ]
     Kp: 3.
     Kd: 0.05
-    T: 1.
+    T: 2.5
     dt: 0.001
