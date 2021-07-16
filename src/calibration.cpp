@@ -85,12 +85,18 @@ void JointCalibrator::UpdatePositionOffsets(ConstRefVectorXd position_offsets)
  */
 bool JointCalibrator::Run()
 {
+    // std::cout << "Entering Run" << std::endl;
     if (t_ == 0.)
     {
+        std::cout << "Enabling compensation" << std::endl;
         joints_->EnableIndexOffsetCompensation();
+        std::cout << "Enabled compensation" << std::endl;
         joints_->SetZeroGains();
         joints_->SetPositionOffsets(position_offsets_);
         initial_positions_ = joints_->GetPositions();
+
+        
+        std::cout << "Initial positions: " << initial_positions_ << std::endl;
 
         // If all the indices are already detected, then assume there
         // is nothing that needs to be done.
@@ -112,6 +118,7 @@ bool JointCalibrator::Run()
     // std::cout << "#----#" << std::endl;
     for (int i = 0; i < n_; i++)
     {
+        std::cout << "PAAAAS" << std::endl;
         // As long as the index was not found, search for it.
         if (!found_index_[i])
         {
@@ -167,15 +174,15 @@ bool JointCalibrator::Run()
                 des_pos = 0;
             }
             command_[i] = Kp_ * (des_pos - positions[i]) - Kd_ * velocities[i];
-            // std::cout << i << " " << found_index_[i] << " " << des_pos << " " << positions[i] << " " << initial_positions_[i] << std::endl;
+            // std::cout << i << " " << found_index_[i] << " " << command_[i] << " " << des_pos << " " << positions[i] << " " << initial_positions_[i] << std::endl;
         }
     }
     /*for (int i = 0; i < n_; i++)
     {
         std::cout << found_index_[i] << " ";
     }
-    std::cout << std::endl;
-    std::cout << "Finished: " << finished << std::endl;*/
+    std::cout << std::endl;*/
+    // std::cout << "Finished: " << finished << std::endl;
 
     joints_->SetTorques(command_);
     t_ += dt_;

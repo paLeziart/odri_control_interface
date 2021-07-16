@@ -46,6 +46,7 @@ int main()
             {
                 if (!is_calibrated)
                 {
+                    std::cout << "Not calibrated" << std::endl;
                     is_calibrated = calib_ctrl->Run();
                     if (is_calibrated)
                     {
@@ -54,16 +55,17 @@ int main()
                 }
                 else
                 {
+                    std::cout << "Calibrated" << std::endl;
                     // Run the main controller.
                     auto pos = robot->joints->GetPositions();
                     auto vel = robot->joints->GetVelocities();
                     // Reverse the positions;
-                    std::cout << "------" << std::endl;
+                    // std::cout << "------" << std::endl;
                     for (int i = 0; i < 12; i++)
                     {
                         // torques[i] = -kp * pos[i] - kd * vel[i];
                         torques[i] = 0.0; // kp * (des_pos[i] - pos[i]) - kd * vel[i];
-                        std::cout << i << " " << des_pos[i] << " " << pos[i] << " " << vel[i] << std::endl;
+                        // std::cout << i << " " << des_pos[i] << " " << pos[i] << " " << vel[i] << std::endl;
                     }
                     robot->joints->SetTorques(torques);
                 }

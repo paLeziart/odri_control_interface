@@ -94,8 +94,10 @@ const VectorXd& JointModules::GetGearRatios()
 
 void JointModules::ParseSensorData()
 {
+    // std::cout << "Motor offsets: ";
     for (int i = 0; i < n_; i++)
     {
+        // std::cout << motors_[i]->GetPositionOffset() << " ";
         positions_(i) =
             motors_[i]->get_position() * polarities_(i) / gear_ratios_(i);
         velocities_(i) =
@@ -109,6 +111,51 @@ void JointModules::ParseSensorData()
         ready_(i) = motors_[i]->get_is_ready();
         enabled_(i) = motors_[i]->get_is_enabled();
     }
+    /* std::cout << std::endl;
+    std::cout << "Motor indexes: ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << index_been_detected_(i) << " ";
+    }
+    std::cout << std::endl;*/
+
+    std::cout << "Motor Enabled:      ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->is_enabled << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Motor Ready:        ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->is_ready << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Index detected:     ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->has_index_been_detected << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Index toggle bit:   ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->index_toggle_bit << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Position offset:    ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->position_offset << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Position motors:    ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->position << " ";
+    }
+    std::cout << std::endl;
+    
 
     for (int i = 0; i < nd_; i++)
     {
@@ -265,6 +312,19 @@ bool JointModules::SawAllIndices()
 bool JointModules::IsReady()
 {
     bool is_ready_ = true;
+
+    /*std::cout << "Enabled: ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->get_is_enabled() << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Ready: ";
+    for (int i = 0; i < n_; i++)
+    {
+        std::cout << motors_[i]->get_is_ready() << " ";
+    }
+    std::cout << std::endl;*/
 
     for (int i = 0; i < n_; i++)
     {

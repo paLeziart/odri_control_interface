@@ -85,6 +85,7 @@ bool Robot::IsAckMsgReceived()
  */
 bool Robot::SendCommand()
 {
+    std::cout << "Sending command" << std::endl;
     HasError();
     if (saw_error_)
     {
@@ -117,6 +118,7 @@ bool Robot::SendCommandAndWaitEndOfCycle()
  */
 void Robot::ParseSensorData()
 {
+    std::cout << "Parsing" << std::endl;
     robot_if->ParseSensorData();
     joints->ParseSensorData();
 
@@ -182,7 +184,7 @@ void Robot::WaitUntilReady()
 
     std::chrono::time_point<std::chrono::system_clock> last =
         std::chrono::system_clock::now();
-    while (!IsReady() && !HasError())
+    while (!IsReady())
     {
         if (((std::chrono::duration<double>)(std::chrono::system_clock::now() -
                                              last))
@@ -215,11 +217,11 @@ bool Robot::IsTimeout()
 bool Robot::HasError()
 {
     saw_error_ |= joints->HasError();
-    if (joints->HasError()) {msg_out_ << "ERROR: Joints error." << std::endl;}
+    if (joints->HasError()) {msg_out_ << "ERROR: Joints error." << std::endl; std::cout << "ERROR: Joints error." << std::endl;}
     if (imu)
     {
         saw_error_ |= imu->HasError();
-        if (imu->HasError()) {msg_out_ << "ERROR: IMU error." << std::endl;}
+        if (imu->HasError()) {msg_out_ << "ERROR: IMU error." << std::endl; std::cout << "ERROR: IMU error." << std::endl;}
     }
 
     if (robot_if->IsTimeout())
@@ -228,8 +230,21 @@ bool Robot::HasError()
         {
             msg_out_ << "ERROR: Robot communication timedout." << std::endl;
         }
+        std::cout << "ERROR: Robot communication timedout." << std::endl;
         saw_error_ = true;
     }
+
+
+    if (saw_error_)
+    {
+        std::cout << "Error" << std::endl;
+    }
+    else 
+    {
+        std::cout << "No Error" << std::endl;
+    }
+
+    
 
     return saw_error_;
 }
