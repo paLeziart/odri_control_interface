@@ -8,26 +8,23 @@ using namespace odri_control_interface;
 #include <iostream>
 #include <stdexcept>
 
-typedef Eigen::Matrix<double, 12, 1> Vector12d;
+typedef Eigen::Matrix<double, 2, 1> Vector2d;
 
 int main()
 {
     nice(-20);  // Give the process a high priority.
 
     // Define the robot from a yaml file.
-    auto robot = RobotFromYamlFile(CONFIG_SOLO12_YAML);
+    auto robot = RobotFromYamlFile(CONFIG_TESTBENCH_YAML);
 
     // Start the robot.
     robot->Start();
 
     // Define controller to calibrate the joints from yaml file.
     auto calib_ctrl = JointCalibratorFromYamlFile(
-        CONFIG_SOLO12_YAML, robot->joints);
+        CONFIG_TESTBENCH_YAML, robot->joints);
 
-    // Initialize simple pd controller.
-    Vector12d torques;
-    double kp = 3.;
-    double kd = 0.05;
+    Vector2d pos_init(3.1415 * 0.5, - 3.1415 * 0.5);  // Target position at the end of the calibration
     int c = 0;
     std::chrono::time_point<std::chrono::system_clock> last =
         std::chrono::system_clock::now();
@@ -45,7 +42,7 @@ int main()
             {
                 if (!is_calibrated)
                 {
-                    is_calibrated = calib_ctrl->Run();
+                    is_calibrated = calib_ctrl->RunAndGoTo(pos_init);
                     if (is_calibrated)
                     {
                         std::cout << "Calibration is done." << std::endl;
@@ -53,15 +50,7 @@ int main()
                 }
                 else
                 {
-                    // Run the main controller.
-                    auto pos = robot->joints->GetPositions();
-                    auto vel = robot->joints->GetVelocities();
-                    // Reverse the positions;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        torques[i] = -kp * pos[i] - kd * vel[i];
-                    }
-                    robot->joints->SetTorques(torques);
+                    robot->joints->SetZeroCommands();
                 }
             }
 
