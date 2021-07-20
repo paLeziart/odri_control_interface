@@ -56,7 +56,9 @@ JointModules::JointModules(
     gear_ratios_.resize(n_);
     motor_constants_.resize(n_);
     positions_.resize(n_);
+    positions_.fill(0);
     velocities_.resize(n_);
+    velocities_.fill(0);
     sent_torques_.resize(n_);
     measured_torques_.resize(n_);
     index_been_detected_.resize(n_);
