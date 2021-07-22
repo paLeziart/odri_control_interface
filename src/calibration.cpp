@@ -244,6 +244,10 @@ bool JointCalibrator::RunAndGoTo(VectorXd const& target_positions)
 
     t_ += dt_;
 
+    if (finished_goto_initial)  // Set all command quantities to 0 when the calibration finishes
+    {
+        joints_->SetZeroCommands();
+    }
     return finished_goto_initial;
 }
 

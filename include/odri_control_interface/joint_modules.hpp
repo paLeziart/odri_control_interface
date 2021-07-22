@@ -131,7 +131,6 @@ public:
      */
     bool HasError();
 
-    void PrintInfoCommand();
     void PrintVector(ConstRefVectorXd vector);
 
 protected:

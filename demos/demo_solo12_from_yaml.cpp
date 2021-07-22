@@ -21,12 +21,13 @@ int main()
     robot->Start();
 
     // Define controller to calibrate the joints from yaml file.
-    auto calib_ctrl = JointCalibratorFromYamlFile(
-        CONFIG_SOLO12_YAML, robot->joints);
+    auto calib_ctrl =
+        JointCalibratorFromYamlFile(CONFIG_SOLO12_YAML, robot->joints);
 
-    // Initialize simple pd controller.
-    Vector12d torques;
-    double kp = 3.;
+    Vector12d pos_init;  // Target position at the end of the calibration
+    pos_init << 0.0, 0.7, -1.4, -0.0, 0.7, -1.4, 0.0, -0.7, +1.4, -0.0, -0.7,
+        +1.4;
+    double kp = 3.0;
     double kd = 0.05;
     int c = 0;
     std::chrono::time_point<std::chrono::system_clock> last =
@@ -45,7 +46,7 @@ int main()
             {
                 if (!is_calibrated)
                 {
-                    is_calibrated = calib_ctrl->Run();
+                    is_calibrated = calib_ctrl->RunAndGoTo(pos_init);
                     if (is_calibrated)
                     {
                         std::cout << "Calibration is done." << std::endl;
@@ -53,15 +54,15 @@ int main()
                 }
                 else
                 {
-                    // Run the main controller.
-                    auto pos = robot->joints->GetPositions();
-                    auto vel = robot->joints->GetVelocities();
-                    // Reverse the positions;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        torques[i] = -kp * pos[i] - kd * vel[i];
-                    }
-                    robot->joints->SetTorques(torques);
+                    // Set all command quantities
+                    robot->joints->SetTorques(Eigen::VectorXd::Zero(12));
+                    robot->joints->SetDesiredPositions(pos_init);
+                    robot->joints->SetDesiredVelocities(
+                        Eigen::VectorXd::Zero(12));
+                    robot->joints->SetPositionGains(kp *
+                                                    Eigen::VectorXd::Ones(12));
+                    robot->joints->SetVelocityGains(kd *
+                                                    Eigen::VectorXd::Ones(12));
                 }
             }
 

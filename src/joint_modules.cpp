@@ -56,9 +56,7 @@ JointModules::JointModules(
     gear_ratios_.resize(n_);
     motor_constants_.resize(n_);
     positions_.resize(n_);
-    positions_.fill(0);
     velocities_.resize(n_);
-    velocities_.fill(0);
     sent_torques_.resize(n_);
     measured_torques_.resize(n_);
     index_been_detected_.resize(n_);
@@ -425,40 +423,6 @@ bool JointModules::HasError()
         }
     }
     return has_error;
-}
-
-void JointModules::PrintInfoCommand()
-{
-    msg_out_ << "Reference positions: ";
-    for (int i = 0; i < n_; i++)
-    {
-        msg_out_ << motors_[i]->get_position_ref() * polarities_(i) / gear_ratios_(i) << " | ";
-    }
-    msg_out_ << std::endl;
-    msg_out_ << "Reference velocities: ";
-    for (int i = 0; i < n_; i++)
-    {
-        msg_out_ << motors_[i]->get_velocity_ref() * polarities_(i) / gear_ratios_(i) << " | ";
-    }
-    msg_out_ << std::endl;
-    msg_out_ << "Reference torques: ";
-    for (int i = 0; i < n_; i++)
-    {
-        msg_out_ << motors_[i]->get_current_ref() * polarities_(i) * gear_ratios_(i) * motor_constants_(i) << " | ";
-    }
-    msg_out_ << std::endl;
-    msg_out_ << "Kp gains: ";
-    for (int i = 0; i < n_; i++)
-    {
-        msg_out_ << motors_[i]->get_kp() * gear_ratios_[i] * gear_ratios_[i] * motor_constants_[i] << " | ";
-    }
-    msg_out_ << std::endl;
-    msg_out_ << "Kd gains: ";
-    for (int i = 0; i < n_; i++)
-    {
-        msg_out_ << motors_[i]->get_kd() * gear_ratios_[i] * gear_ratios_[i] * motor_constants_[i] << " | ";
-    }
-    msg_out_ << std::endl;
 }
 
 void JointModules::PrintVector(ConstRefVectorXd vector)
