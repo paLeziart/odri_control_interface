@@ -102,6 +102,7 @@ public:
     void SetPositionOffsets(ConstRefVectorXd position_offsets);
 
     void EnableIndexOffsetCompensation();
+    void EnableIndexOffsetCompensation(int);
 
     const VectorXb& HasIndexBeenDetected();
     const VectorXb& GetReady();
