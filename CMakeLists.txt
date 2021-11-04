@@ -65,7 +65,7 @@ endif(BUILD_PYTHON_INTERFACE)
 
 # --- MAIN LIBRARY -------------------------------------------------------------
 set(ODRI_CONTROL_INTERFACE_SRC src/joint_modules.cpp src/imu.cpp src/robot.cpp
-                               src/calibration.cpp src/utils.cpp)
+                               src/calibration.cpp src/utils.cpp src/powerboard.cpp)
 add_library(${PROJECT_NAME} SHARED ${ODRI_CONTROL_INTERFACE_SRC})
 target_link_libraries(${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} master_board_sdk::master_board_sdk)
@@ -73,6 +73,7 @@ target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include>)
+set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "\$ORIGIN")
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${TARGETS_EXPORT_NAME}
