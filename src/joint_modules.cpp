@@ -25,8 +25,8 @@ JointModules::JointModules(
     double max_joint_velocities,
     double safety_damping)
     : robot_if_(robot_if),
-      motor_constants_(motor_constants),
       gear_ratios_(gear_ratios),
+      motor_constants_(motor_constants),
       lower_joint_limits_(lower_joint_limits),
       upper_joint_limits_(upper_joint_limits),
       max_joint_velocities_(max_joint_velocities),
