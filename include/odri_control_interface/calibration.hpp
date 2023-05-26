@@ -14,6 +14,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <algorithm>
+#include <fstream>
 
 #include "master_board_sdk/defines.h"
 #include "master_board_sdk/master_board_interface.h"
@@ -26,6 +27,7 @@ namespace odri_control_interface
 const int SEARCHING = 0;
 const int WAITING = 1;
 const int GOTO = 2;
+const int CORRECTION = 3;
 const double AMPLITUDE = 1.5;
 
 enum CalibrationMethod
@@ -45,6 +47,7 @@ protected:
     std::shared_ptr<JointModules> joints_;
     std::vector<CalibrationMethod> search_methods_;
     VectorXd position_offsets_;
+    VectorXd correction_offsets_;
     VectorXi calib_order_;
     VectorXd calib_pos_;
     VectorXd initial_positions_;
@@ -60,22 +63,28 @@ protected:
     double Kd_;
     double T_;
     double T_wait_;
+    double T_correction_;
     double dt_;
     double t_;
     int n_;
     bool already_calibrated_;
+    bool redo_calibration_correction_;
+    std::string correction_path_;
     int calib_state_;
     int step_number_;
     int step_number_max_;
     bool step_indexes_detected_;
     double t_step_indexes_detected_;
     double t_step_end_;
+    double t_start_correction_;
 
 public:
 
     JointCalibrator(const std::shared_ptr<JointModules>& joints,
                     const std::vector<CalibrationMethod>& search_methods,
                     RefVectorXd position_offsets,
+                    RefVectorXd correction_offsets,
+                    const std::string& correction_path,
                     RefVectorXi calib_order,
                     RefVectorXd calib_pos,
                     double Kp,
@@ -89,6 +98,11 @@ public:
      * Return the joint position offsets.
      */
     const VectorXd& GetPositionOffsets();
+
+    /**
+     * Return the joint correction offsets.
+     */
+    const VectorXd& GetCorrectionOffsets();
 
     /**
      * Return the dt used by the joint calibrator.
@@ -108,6 +122,21 @@ public:
      * @param target_positions target positions for the legs at the end of the calibration
      */
     bool RunAndGoTo(VectorXd const& target_positions);
+
+    /**
+    * @brief Run calibration correction checks, i.e if one of the joints
+    * is brought sufficiently far from its target position then assume it is
+    * being corrected, so add one motor turn to the offset.
+    *
+    * @param positions current joint positions
+    */
+    void RunCalibrationCorrection(ConstRefVectorXd positions);
+
+    /**
+    * @brief Save new correction offsets to disk to reload them
+    * when the controller is restarted
+    */
+    void SaveCorrectionOffsets();
 
     /**
      * @brief Search the index using the desired

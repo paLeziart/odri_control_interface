@@ -119,6 +119,16 @@ const VectorXd& JointModules::GetGearRatios()
     return gear_ratios_;
 }
 
+VectorXd JointModules::GetMotorPositionOffsets()
+{
+    VectorXd offsets = VectorXd::Zero(n_);
+    for (int i = 0; i < n_; i++)
+    {
+        offsets(i) = motors_[i]->GetPositionOffset();
+    }
+    return offsets;
+}
+
 int JointModules::GetNumberMotors()
 {
     return n_;
@@ -244,6 +254,12 @@ void JointModules::SetPositionOffsets(ConstRefVectorXd position_offsets)
     // Need to trigger a sensor parsing to update the joint positions.
     robot_if_->ParseSensorData();
     ParseSensorData();
+}
+
+void JointModules::SetCorrectedPositionOffsets(ConstRefVectorXd position_offsets,
+                                               ConstRefVectorXd correction_offsets)
+{
+    SetPositionOffsets(position_offsets + correction_offsets);
 }
 
 void JointModules::EnableIndexOffsetCompensation()

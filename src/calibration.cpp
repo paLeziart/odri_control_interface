@@ -18,6 +18,8 @@ JointCalibrator::JointCalibrator(
     const std::shared_ptr<JointModules>& joints,
     const std::vector<CalibrationMethod>& search_methods,
     RefVectorXd position_offsets,
+    RefVectorXd correction_offsets,
+    const std::string& correction_path,
     RefVectorXi calib_order,
     RefVectorXd calib_pos,
     double Kp,
@@ -27,21 +29,26 @@ JointCalibrator::JointCalibrator(
     : joints_(joints),
       search_methods_(search_methods),
       position_offsets_(position_offsets),
+      correction_offsets_(correction_offsets),
       calib_order_(calib_order),
       calib_pos_(calib_pos),
       Kp_(Kp),
       Kd_(Kd),
       T_(T),
       T_wait_(0.1),
+      T_correction_(5.0),
       dt_(dt),
       t_(0.),
       already_calibrated_(false),
+      redo_calibration_correction_(false),
+      correction_path_(correction_path),
       calib_state_(0),
       step_number_(0),
       step_number_max_(0),
       step_indexes_detected_(false),
       t_step_indexes_detected_(0.),
-      t_step_end_(0.)
+      t_step_end_(0.),
+      t_start_correction_(0.)
 {
     gear_ratios_ = joints->GetGearRatios();
     n_ = static_cast<int>(gear_ratios_.size());
@@ -56,6 +63,12 @@ JointCalibrator::JointCalibrator(
     {
         throw std::runtime_error(
             "Position offsets has different size than motor numbers");
+    }
+
+    if (static_cast<int>(correction_offsets.size()) != n_)
+    {
+        throw std::runtime_error(
+            "Correction offsets has different size than motor numbers");
     }
 
     if (static_cast<int>(calib_order.size()) != n_)
@@ -120,6 +133,11 @@ const VectorXd& JointCalibrator::GetPositionOffsets()
     return position_offsets_;
 }
 
+const VectorXd& JointCalibrator::GetCorrectionOffsets()
+{
+    return correction_offsets_;
+}
+
 const double& JointCalibrator::dt()
 {
     return dt_;
@@ -130,7 +148,7 @@ const double& JointCalibrator::dt()
  * done.
  */
 bool JointCalibrator::Run()
-{
+{   
     return RunAndGoTo(zero_vector_);
 }
 
@@ -145,10 +163,20 @@ bool JointCalibrator::Run()
  */
 bool JointCalibrator::RunAndGoTo(VectorXd const& target_positions)
 {
+    bool use_calibration_correction = true;  // TODO: Make this a parameter
     if (t_ == 0.)
     {
+        if (!joints_->SawAllIndices() && use_calibration_correction)
+        {   
+            // Reset calibration offsets since the robot has been restarted
+            correction_offsets_ = VectorXd::Zero(position_offsets_.rows());
+            SaveCorrectionOffsets();
+            redo_calibration_correction_ = true;
+        }
+
         joints_->SetZeroGains();
-        joints_->SetPositionOffsets(position_offsets_);
+        joints_->SetCorrectedPositionOffsets(position_offsets_, correction_offsets_);
+
         initial_positions_ = joints_->GetPositions();
         target_positions_ = joints_->GetPositions();
 
@@ -251,13 +279,39 @@ bool JointCalibrator::RunAndGoTo(VectorXd const& target_positions)
             step_number_++;
             if (step_number_ > step_number_max_ || already_calibrated_)
             {
-                // Set all command quantities to 0 when the calibration finishes.
-                joints_->SetZeroCommands();
-                return true;
+                if (redo_calibration_correction_ && !already_calibrated_)
+                {
+                    calib_state_ = CORRECTION;
+                    t_start_correction_ = t_;
+                    joints_->DisableJointLimitCheck();
+                }
+                else
+                {
+                    joints_->EnableJointLimitCheck();
+                    // Set all command quantities to 0 when the calibration finishes.
+                    joints_->SetZeroCommands();
+                    return true;
+                }
             }
-            calib_state_ = SEARCHING;
-            t_step_end_ = t_;
-            joints_->DisableJointLimitCheck();
+            else
+            {
+                calib_state_ = SEARCHING;
+                t_step_end_ = t_;
+                joints_->DisableJointLimitCheck();
+            }
+        }
+    }
+    else if (calib_state_ == CORRECTION)
+    {
+        if (t_ - t_start_correction_ > T_correction_)
+        {
+            // Set all command quantities to 0 when the calibration finishes
+            joints_->SetZeroCommands();
+            return true;
+        }
+        else
+        {
+            RunCalibrationCorrection(positions);
         }
     }
     else
@@ -281,6 +335,58 @@ bool JointCalibrator::RunAndGoTo(VectorXd const& target_positions)
         joints_->SetZeroCommands();
     }
     return false;
+}
+
+/**
+ * @brief Run calibration correction checks, i.e if one of the joints
+ * is brought sufficiently far from its target position then assume it is
+ * being corrected, so add one motor turn to the offset.
+ *
+ * @param positions current joint positions
+ */
+void JointCalibrator::RunCalibrationCorrection(ConstRefVectorXd positions)
+{
+    bool update = false;
+    for (int i = 0; i < n_; i++)
+    {
+        // Add one turn of offset correction if tracking error is above treshold
+        if (std::abs(positions[i] - pos_command_[i]) > M_PI * 1.25 / gear_ratios_[i])
+        {
+            update = true;
+            correction_offsets_[i] -= std::copysign(2 * M_PI / gear_ratios_[i], 
+                                                    positions[i] - pos_command_[i]);
+        }
+    }
+
+    if (update)
+    {
+        // Update position offsets with new correction
+        joints_->SetCorrectedPositionOffsets(position_offsets_, correction_offsets_);
+
+        // Save correction offsets to file
+        SaveCorrectionOffsets();
+
+        // Reset timer of calibration correction
+        t_start_correction_ = t_;
+    }
+}
+
+/**
+ * @brief Save new correction offsets to disk to reload them
+ * when the controller is restarted
+ */
+void JointCalibrator::SaveCorrectionOffsets()
+{
+    std::ofstream new_correction_file(correction_path_);
+    if (!new_correction_file.good())
+    {
+        throw std::runtime_error("Failed to update " + correction_path_);
+    }
+    for (int i = 0; i < n_; i++)
+    {
+        new_correction_file << correction_offsets_(i) << " ";
+    }
+    new_correction_file.close();
 }
 
 /**

@@ -242,7 +242,8 @@ std::shared_ptr<IMU> IMUFromYaml(std::shared_ptr<MasterBoardInterface> robot_if,
 }
 
 std::shared_ptr<JointCalibrator> JointCalibratorFromYaml(
-    std::shared_ptr<JointModules> joints, const YAML::Node& joint_calibrator)
+    std::shared_ptr<JointModules> joints, const YAML::Node& joint_calibrator,
+    const std::string& file_path)
 {
     assert_yaml_parsing(joint_calibrator, "joint_calibrator", "search_methods");
     std::vector<CalibrationMethod> calib_methods;
@@ -281,6 +282,68 @@ std::shared_ptr<JointCalibrator> JointCalibratorFromYaml(
     for (std::size_t i = 0; i < n; i++)
     {
         position_offsets_vec(i) = position_offsets[i].as<double>();
+    }
+
+    // Retrieve the directory path where the config yaml is stored
+    std::size_t k = file_path.size() - 1;
+    while (k > 0 && file_path[k] != '/')
+    {
+        k--;
+    }
+    std::string directory_path = file_path.substr(0, k + 1);
+
+    // Check if correction offsets have already been stored and retrieve them
+    // Otherwise create storing file and use zeros for correction offsets
+    std::string correction_path = directory_path + "correction_offsets.txt";
+    std::ifstream ifile(correction_path, std::ios::in);
+    bool check_n_val = false;
+    if (ifile.is_open())
+    {
+        // Check that there is the right number of values
+        double val = 0.0;
+        std::size_t n_val = 0;
+        while (ifile >> val) {
+            n_val++;
+        }
+        ifile.close();
+        if (n == n_val)
+        {
+            check_n_val = true;
+        }
+    }
+
+    // File does not exist or does not contain the right number of offsets
+    if (!check_n_val)
+    {
+        std::ofstream new_correction_file(correction_path);
+        if (!new_correction_file.good())
+        {
+            throw std::runtime_error("Failed to create " + correction_path);
+        }
+        for (std::size_t i = 0; i < n; i++)
+        {
+            new_correction_file << 0.0 << " ";
+        }
+        new_correction_file.close();
+    }
+
+    // Now we are sure the file either exists or has just been created
+    // In both cases it will have the right number of offsets
+    std::ifstream correction_file(correction_path, std::ios::in);
+    VectorXd correction_offsets_vec;
+    correction_offsets_vec = VectorXd::Zero(n);  // Fill with 0s just in case
+    if (correction_file.is_open())
+    {
+        double correction_offset = 0.0;
+        int n_val = 0;
+        while (correction_file >> correction_offset) {
+            correction_offsets_vec(n_val) = correction_offset;
+            n_val++;
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Failed to read or create " + correction_path);
     }
 
     VectorXi calib_order_vec;
@@ -325,6 +388,8 @@ std::shared_ptr<JointCalibrator> JointCalibratorFromYaml(
         joints,
         calib_methods,
         position_offsets_vec,
+        correction_offsets_vec,
+        correction_path,
         calib_order_vec,
         calib_pos_vec,
         joint_calibrator["Kp"].as<double>(),
@@ -359,7 +424,7 @@ std::shared_ptr<Robot> RobotFromYamlFile(const std::string& if_name,
     // 4. Create the calibrator procedure.
     assert_yaml_parsing(param, file_path, "joint_calibrator");
     std::shared_ptr<JointCalibrator> calibrator =
-        JointCalibratorFromYaml(joints, param["joint_calibrator"]);
+        JointCalibratorFromYaml(joints, param["joint_calibrator"], file_path);
 
     // 5. Create the robot instance from the objects.
     return std::make_shared<Robot>(robot_if, joints, imu, calibrator);
@@ -385,7 +450,7 @@ std::shared_ptr<JointCalibrator> JointCalibratorFromYamlFile(
     YAML::Node param = YAML::LoadFile(file_path);
 
     assert_yaml_parsing(param, file_path, "joint_calibrator");
-    return JointCalibratorFromYaml(joints, param["joint_calibrator"]);
+    return JointCalibratorFromYaml(joints, param["joint_calibrator"], file_path);
 }
 
 std::shared_ptr<MasterBoardInterface> CreateMasterBoardInterface(

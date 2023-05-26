@@ -24,6 +24,8 @@ std::shared_ptr<JointCalibrator> joint_calibrator_constructor(
     std::shared_ptr<JointModules> joints,
     boost::python::list search_methods,
     RefVectorXd position_offsets,
+    RefVectorXd correction_offsets,
+    std::string correction_path,
     RefVectorXi calib_order,
     RefVectorXd calib_pos,
     double Kp,
@@ -39,8 +41,8 @@ std::shared_ptr<JointCalibrator> joint_calibrator_constructor(
             boost::python::extract<CalibrationMethod>(search_methods[i]));
     }
     return std::make_shared<JointCalibrator>(
-        joints, search_method_vec, position_offsets, calib_order,
-        calib_pos, Kp, Kd, T, dt);
+        joints, search_method_vec, position_offsets, correction_offsets,
+        correction_path, calib_order, calib_pos, Kp, Kd, T, dt);
 }
 
 std::shared_ptr<JointModules> joint_modules_constructor(

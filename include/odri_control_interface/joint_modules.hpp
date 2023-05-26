@@ -102,6 +102,8 @@ public:
 
     // Used for calibration.
     void SetPositionOffsets(ConstRefVectorXd position_offsets);
+    void SetCorrectedPositionOffsets(ConstRefVectorXd position_offsets,
+                                     ConstRefVectorXd correction_offsets);
 
     void EnableIndexOffsetCompensation();
     void EnableIndexOffsetCompensation(int);
@@ -125,6 +127,7 @@ public:
     const VectorXd& GetMeasuredTorques();
 
     const VectorXd& GetGearRatios();
+    VectorXd GetMotorPositionOffsets();
 
     int GetNumberMotors();
 
