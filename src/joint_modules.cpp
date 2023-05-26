@@ -98,10 +98,10 @@ JointModules::JointModules(
     motor_driver_errors_.resize(nd_);
     motor_driver_errors_.fill(0);
 
-    std::cout << "DEBUG" << std::endl;
+    /*std::cout << "DEBUG" << std::endl;
     std::cout << motor_constants_ << std::endl;
     std::cout << gear_ratios_ << std::endl;
-    std::cout << max_currents << std::endl;
+    std::cout << max_currents << std::endl;*/
 
     for (int i = 0; i < n_; i++)
     {
