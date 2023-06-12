@@ -329,11 +329,6 @@ bool JointCalibrator::RunAndGoTo(VectorXd const& target_positions)
 
     t_ += dt_;
 
-    // Set all command quantities to 0 when the calibration finishes.
-    if (step_number_ > step_number_max_)
-    {
-        joints_->SetZeroCommands();
-    }
     return false;
 }
 
